@@ -100,6 +100,31 @@
         }
         .search-bar button:hover { background-color: rgba(255,255,255,0.1); }
 
+        .mobile-search-close {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--md-sys-color-on-background);
+            font-size: 18px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+
+        .mobile-search-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--md-sys-color-on-background);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition-smooth);
+        }
+        .mobile-search-btn:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
         .auth-action-btn {
             background-color: var(--md-sys-color-primary-container);
             color: var(--md-sys-color-primary);
@@ -142,8 +167,7 @@
            ========================================= */
         .video-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; row-gap: 36px; }
         
-        .video-card { cursor: pointer; display: flex; flex-direction: column; gap: 12px; transition: transform 0.2s ease; }
-        .video-card:hover .thumbnail { transform: scale(1.02); }
+        .video-card { cursor: pointer; display: flex; flex-direction: column; gap: 12px; }
 
         .thumbnail-container { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 16px; overflow: hidden; background-color: #000; }
         .thumbnail { width: 100%; height: 100%; object-fit: cover; transition: var(--transition-smooth); }
@@ -294,34 +318,48 @@
             .nav-item i { margin-right: 0; }
         }
         
-        /* ПРАВИЛА ДЛЯ ТЕЛЕФОНОВ (Уменьшенные карточки) */
+        /* ПРАВИЛА ДЛЯ ТЕЛЕФОНОВ */
         @media (max-width: 600px) { 
             aside { display: none; } 
-            .search-container { display: none; }
             .bottom-nav { display: flex; } 
             .layout { height: calc(100vh - 64px - 60px); } 
             header { padding: 0 16px; }
 
-            /* Делаем контент более компактным */
+            /* Мобильный поиск и кнопка закрытия */
+            .mobile-search-btn { display: block; }
+            .mobile-search-close { display: block; }
+            .search-container { display: none; }
+            
+            /* Активное состояние мобильного поиска (на весь экран хедера) */
+            .search-container.active {
+                display: flex !important;
+                position: fixed;
+                top: 0; left: 0; width: 100%; height: 64px;
+                background-color: var(--md-sys-color-background);
+                z-index: 110;
+                padding: 0 16px;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Компактный контент */
             main { padding: 16px 12px 80px 12px; } 
             .section-title { font-size: 20px; margin-bottom: 16px; }
 
             /* Сетка и отступы между видео */
             .video-grid { 
                 grid-template-columns: 1fr; 
-                gap: 16px; /* Меньше пустого места по бокам */
-                row-gap: 24px; /* Меньше расстояние по вертикали */
+                gap: 16px; 
+                row-gap: 24px; 
             } 
             
-            /* Сама карточка видео */
             .video-card { gap: 10px; }
-            .thumbnail-container { border-radius: 12px; } /* Чуть меньше скругление */
+            .thumbnail-container { border-radius: 12px; } 
             
-            /* Инфо-блок под превью */
             .video-info { gap: 10px; }
-            .channel-avatar { width: 32px; height: 32px; } /* Аватарка поменьше */
-            .video-title { font-size: 14px; margin-bottom: 2px; } /* Шрифт заголовка */
-            .channel-name, .video-meta { font-size: 12px; } /* Шрифт доп. инфы */
+            .channel-avatar { width: 32px; height: 32px; } 
+            .video-title { font-size: 14px; margin-bottom: 2px; } 
+            .channel-name, .video-meta { font-size: 12px; } 
         }
     </style>
 </head>
@@ -332,20 +370,29 @@
             <i class="fab fa-youtube" style="color:var(--youtube-red)"></i> EgorTube
         </div>
         
-        <div class="search-container">
+        <div class="search-container" id="searchContainer">
+            <button class="mobile-search-close" onclick="toggleMobileSearch(false)">
+                <i class="fas fa-arrow-left"></i>
+            </button>
             <div class="search-bar">
-                <input type="text" id="searchField" placeholder="Введите запрос" onkeyup="if(event.key === 'Enter') triggerSearch()">
-                <button onclick="triggerSearch()"><i class="fas fa-search"></i></button>
+                <input type="text" id="searchField" placeholder="Введите запрос" onkeyup="if(event.key === 'Enter') triggerSearchMobile()">
+                <button onclick="triggerSearchMobile()"><i class="fas fa-search"></i></button>
             </div>
         </div>
 
-        <div class="auth-zone">
-            <button class="auth-action-btn" id="loginBtn" onclick="openAuthModal()">
-                <i class="far fa-user-circle"></i> Войти
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="mobile-search-btn" onclick="toggleMobileSearch(true)">
+                <i class="fas fa-search"></i>
             </button>
-            <div class="user-profile-zone" id="profileZone" onclick="logout()">
-                <span id="userNameDisplay" style="font-weight:500;">User</span>
-                <div class="user-avatar" id="avatarIcon">U</div>
+
+            <div class="auth-zone">
+                <button class="auth-action-btn" id="loginBtn" onclick="openAuthModal()">
+                    <i class="far fa-user-circle"></i> Войти
+                </button>
+                <div class="user-profile-zone" id="profileZone" onclick="logout()">
+                    <span id="userNameDisplay" style="font-weight:500;">User</span>
+                    <div class="user-avatar" id="avatarIcon">U</div>
+                </div>
             </div>
         </div>
     </header>
@@ -375,7 +422,7 @@
         </aside>
 
         <main>
-            <h2 class="section-title" id="pageTitle">Рекомендации</h2>
+            <h2 class="section-title" id="pageTitle" style="display: none;">Рекомендации</h2>
             
             <div class="video-grid" id="videoGrid"></div>
 
@@ -508,6 +555,21 @@
         /* =========================================
            РОУТИНГ И НАВИГАЦИЯ
            ========================================= */
+        function toggleMobileSearch(show) {
+            const searchContainer = document.getElementById('searchContainer');
+            if (show) {
+                searchContainer.classList.add('active');
+                document.getElementById('searchField').focus();
+            } else {
+                searchContainer.classList.remove('active');
+            }
+        }
+
+        function triggerSearchMobile() {
+            triggerSearch();
+            toggleMobileSearch(false);
+        }
+
         function changeRoute(route) {
             currentRoute = route;
             searchKeyword = '';
@@ -524,29 +586,41 @@
             const activeBottomNav = document.getElementById(`bottom-nav-${route}`);
             if (activeBottomNav) activeBottomNav.classList.add('active');
 
-            const titles = {
-                home: "Рекомендации",
-                trending: "В тренде (Новинки)",
-                subs: "Обновления подписок",
-                library: "Ваша медиатека",
-                history: "История просмотров",
-                channel: "Настройки профиля"
-            };
-            document.getElementById('pageTitle').textContent = titles[route] || "EgorTube";
-            
             renderLayout();
         }
 
         function triggerSearch() {
             searchKeyword = document.getElementById('searchField').value.trim().toLowerCase();
-            document.getElementById('pageTitle').textContent = searchKeyword ? `Результаты по запросу: "${searchKeyword}"` : "Рекомендации";
             closePlayer();
             renderLayout();
         }
 
         function renderLayout() {
             const grid = document.getElementById('videoGrid');
+            const pageTitleEl = document.getElementById('pageTitle');
             grid.innerHTML = '';
+            
+            // Управление заголовками страниц
+            const titles = {
+                home: "", // Для главной страницы пустая строка (заголовок скрывается)
+                trending: "В тренде (Новинки)",
+                subs: "Обновления подписок",
+                library: "Ваша медиатека",
+                history: "История просмотров",
+                channel: "Настройки профиля"
+            };
+
+            if (currentRoute === 'channel' || currentPlayingVideo) {
+                pageTitleEl.style.display = 'none';
+            } else {
+                const titleText = searchKeyword ? `Результаты по запросу: "${searchKeyword}"` : titles[currentRoute];
+                if (titleText) {
+                    pageTitleEl.textContent = titleText;
+                    pageTitleEl.style.display = 'block';
+                } else {
+                    pageTitleEl.style.display = 'none';
+                }
+            }
             
             if (currentRoute === 'channel') {
                 if (!currentUser) {
@@ -702,7 +776,7 @@
             
             document.getElementById('playerView').style.display = 'none';
             document.getElementById('videoGrid').style.display = 'grid';
-            document.getElementById('pageTitle').style.display = 'block';
+            renderLayout();
         }
 
         function updateSubscribeButtonUI() {
